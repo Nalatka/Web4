@@ -12,14 +12,14 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
 
-mongoose.connect('mongodb+srv://peacediebull1_db_user:<db_password>@cluster0.0fic2sp.mongodb.net/?appName=Cluster0',{serverSelectionTimeoutMS: 5000})
+mongoose.connect('mongodb+srv://peacediebull1_db_user:g3J6L2E1LYpFJM4A@cluster0.0fic2sp.mongodb.net/?appName=Cluster0',{serverSelectionTimeoutMS: 5000})
 .then(() => {
     console.log('Connected to MongoDB')
     quickSeed()
 })
 .catch(err => {
-    console.error('❌ ОШИБКА ПОДКЛЮЧЕНИЯ К БД:', err.message);
-    console.log('Убедитесь, что MongoDB запущена! Попробуйте запустить Compass.');
+    console.error(' Error accesing DB', err.message);
+    console.log('Make sure MongoDB is running and accessible.');
 });
 
 
@@ -142,12 +142,12 @@ async function quickSeed() {
                 });
             }
             await Measurement.insertMany(data);
-            console.log("✅ Database seeded with 25 records for Jan 2026.");
+            console.log(" Database seeded with 25 records for Jan 2026.");
         } else {
-            console.log(`ℹ️ Database already has ${count} records.`);
+            console.log(`Database already has ${count} records.`);
         }
     } catch (err) {
-        console.error("❌ Seed error:", err);
+        console.error(" Seed error:", err);
     }
 }
 
