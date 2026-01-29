@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитическая платформа</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; align-items: end; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+        .metric-card { background: #eef2ff; padding: 15px; border-radius: 5px; text-align: center; border: 1px solid #d1d5db; }
+        .metric-card span { display: block; font-size: 1.2rem; font-weight: bold; color: #3730a3; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📈 Аналитическая платформа</h2>
+    
+    <div class="controls">
+        <div>
+            <label>Поле:</label>
+            <select id="fieldSelect">
+                <option value="field1">Температура (Field 1)</option>
+                <option value="field2">Влажность (Field 2)</option>
+                <option value="field3">CO2 (Field 3)</option>
+            </select>
+        </div>
+        <div>
+            <label>От:</label>
+            <input type="date" id="startDate">
+        </div>
+        <div>
+            <label>До:</label>
+            <input type="date" id="endDate">
+        </div>
+        <button onclick="updateDashboard()" style="padding: 8px 15px; cursor: pointer; background: #3b82f6; color: white; border: none; border-radius: 4px;">Обновить</button>
+    </div>
+
+    <canvas id="analyticsChart"></canvas>
+
+    <div class="metrics-grid" id="metricsContainer" style="display: none;">
+        <div class="metric-card">Среднее: <span id="mAvg">-</span></div>
+        <div class="metric-card">Минимум: <span id="mMin">-</span></div>
+        <div class="metric-card">Максимум: <span id="mMax">-</span></div>
+        <div class="metric-card">Станд. откл.: <span id="mStd">-</span></div>
+    </div>
+</div>
+
+<script>
+    let myChart = null;
+
+    async function updateDashboard() {
+        const field = document.getElementById('fieldSelect').value;
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+
+        const params = `field=${field}${start ? '&start_date='+start : ''}${end ? '&end_date='+end : ''}`;
+
+        try {
+            const dataRes = await fetch(`/api/measurements?${params}`);
+            const data = await dataRes.json();
+            if (data.error) throw new Error(data.error);
+
+            const metricsRes = await fetch(`/api/measurements/metrics?${params}`);
+            const metrics = await metricsRes.json();
+
+            renderChart(data, field);
+            showMetrics(metrics);
+        } catch (err) {
+            alert("Ошибка: " + err.message);
+        }
+    }
+
+    function renderChart(data, fieldName) {
+        const ctx = document.getElementById('analyticsChart').getContext('2d');
+        
+        if (myChart) myChart.destroy(); 
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(d => new Date(d.timestamp).toLocaleString()),
+                datasets: [{
+                    label: fieldName,
+                    data: data.map(d => d[fieldName]),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: false } } }
+        });
+    }
+
+    function showMetrics(m) {
+        document.getElementById('metricsContainer').style.display = 'grid';
+        document.getElementById('mAvg').innerText = m.avg.toFixed(2);
+        document.getElementById('mMin').innerText = m.min.toFixed(2);
+        document.getElementById('mMax').innerText = m.max.toFixed(2);
+        document.getElementById('mStd').innerText = m.stdDev.toFixed(2);
+    }
+</script>
+
+</body>
+</html>

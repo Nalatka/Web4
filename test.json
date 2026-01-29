@@ -1,0 +1,6 @@
+db.measurements.insertOne({
+  timestamp: new Date(),
+  field1: 22.5,
+  field2: 45,
+  field3: 400
+})
